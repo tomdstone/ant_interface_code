@@ -79,7 +79,7 @@ def ant_mne_dig2mont(montage, digmontage, kind='duke129_dig'):
 
     # confirm number of channels not changed
     assert montage.pos.shape == (132, 3), 'Dimension of montage positions is changed!'
-    assert all(montage.selection == np.arange(132)), 'Selection index is not selecting all 132 positions!'
+    assert np.all(montage.selection == np.arange(132)), 'Selection index is not selecting all 132 positions!'
 
     return montage
 
@@ -100,6 +100,8 @@ def ant_mne_create_montage(csvfn, dig_filepath, new_MNEv=True):
 
     :param dig_filepath: full path to the folder containing
                          the .csv file
+
+    :param new_MNEv: whether to use routine for newer MNE version
 
     :return:
              montage: a MNE Montage object with digitization
