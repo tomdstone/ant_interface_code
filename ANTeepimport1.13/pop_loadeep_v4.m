@@ -115,10 +115,6 @@ EEG.setname         = 'EEProbe continuous data';
 EEG.nbchan          = r.v4_info.channel_count;
 EEG.xmin            = r.v4_data.start_in_seconds;
 EEG.srate           = r.v4_info.sample_rate;
-% Confirm that srate is 1000Hz for eego mylab system
-if EEG.srate ~= 1000
-    warning('.cnt file loaded by pop_loadeep_v4() has sampling frequency different from 1000Hz!')
-end
 EEG.pnts            = 1 + r.sample2 - r.sample1;
 
 % Create struct for holding channel labels
