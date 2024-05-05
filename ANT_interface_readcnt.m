@@ -7,7 +7,7 @@ function [ EEG ] = ANT_interface_readcnt(filename, filepath, dsrate, verbose)
 % (if the recording was broken into multiple segments) with the same naming
 % before the file extension.
 %
-% Last edit: Alex He 10/10/2022
+% Last edit: Alex He 05/05/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Inputs:
 %           - filename:     file name of the .cnt file, the .evt and .seg
@@ -69,7 +69,7 @@ catch
 end
 
 %% Start EEGLab
-eeglab; close;
+eeglab nogui; close;
 
 %% Construct data filename
 datafn = fullfile(filepath, filename);

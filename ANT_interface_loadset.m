@@ -5,7 +5,7 @@ function [ EEG ] = ANT_interface_loadset(filename, filepath, verbose, todouble)
 % - Used to load an EEGLAB format .set file containing the EEG structure
 % with the data and other recording information
 %
-% Last edit: Alex He 08/30/2019
+% Last edit: Alex He 05/04/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Inputs:
 %           - filename:     file name of the .set file.
@@ -49,7 +49,7 @@ end
 
 %% Load data
 % Start EEGLab
-eeglab; close;
+eeglab nogui; close;
 
 if verbose; tic; end
 % Call pop_loadset.m function from EEGLAB to load .set file
