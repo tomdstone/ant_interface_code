@@ -53,7 +53,11 @@ if nargin < 2
     end;
 end;
 if found
-    fprintf('EGI channel location automatically detected %s ********* WARNING please check that this the proper file\n', fileloc);
+    if nargin < 2
+        fprintf('EGI channel location automatically detected %s ********* WARNING please check that this the proper file\n', fileloc);
+    else
+        fprintf('EGI channel location read from file %s\n', fileloc);
+    end
     if EEG.nbchan == 64 || EEG.nbchan == 65 || EEG.nbchan == 256 || EEG.nbchan == 257
         fprintf( [ 'Warning: this function assumes you have a 64-channel system Version 2\n' ...
                    '         if this is not the case, update the channel location with the proper file' ]);
@@ -72,9 +76,9 @@ if found
             chaninfo.nodatchans = locs([end]);
             locs([end]) = [];
         end;
-    elseif mod(EEG.nbchan,2) == 0, 
-        chaninfo.nodatchans = locs([1 2 3 end]);
-        locs([1 2 3 end]) = [];
+%     elseif mod(EEG.nbchan,2) == 0, 
+%         chaninfo.nodatchans = locs([1 2 3 end]);
+%         locs([1 2 3 end]) = [];
     else
         chaninfo.nodatchans = locs([1 2 3]);
         locs([1 2 3]) = [];
