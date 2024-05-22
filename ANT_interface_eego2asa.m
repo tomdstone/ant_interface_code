@@ -49,7 +49,7 @@ switch capconfig
         end
         
     case 'new-Z3' % new ANT Duke cap collected on eego mylab system, with dropdown EOG sensor
-        % the only change now is channel 85 is recorded to be EOG, and the
+        % the only change is that channel 85 is recorded to be EOG, and the
         % original channel 85 (Z3) electrode is not explicitly recorded
         % since it is the reference electrode. We will add it back in for
         % the ease of fastscan / forward modeling.
