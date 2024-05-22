@@ -64,7 +64,7 @@ switch capconfig
         tempdata(129,:) = tempdata(85,:); % now number 129 is the EOG
         tempdata(85,:) = zeros(1, size(tempdata,2)); % reference channel as zero recording
         EEG.data = tempdata;
-                
+        
         % Add one more channel in the channel location
         if EEG.nbchan >= 129
             EEG.chanlocs(130:EEG.nbchan+1) = EEG.chanlocs(129:end);
