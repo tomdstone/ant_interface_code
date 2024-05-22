@@ -149,6 +149,11 @@ for i = 1:length(sample_point)-1
     end
     
     if dsrate(1) % if downsampling flag is true
+        % For using pop_resample function: trials number is updated to be 1
+        if EEG.trials == 0
+            EEG.trials = 1;
+        end
+        
         % downsample to desired sampling rate in Hz as specified by dsrate(2)
         % pop_resample function
         % Inputs:
@@ -159,7 +164,7 @@ for i = 1:length(sample_point)-1
         %   fc         - anti-aliasing filter cutoff (pi rad / sample)
         %                {default 0.9}
         %   df         - anti-aliasing filter transition band width (pi rad /
-        %                sample) {default 0.2}
+        %                sample) {default 0.2}        
         if verbose; disp(' '); disp('Downsampling...'); end
         EEG = pop_resample(EEG, dsrate(2), 0.9, 0.1);
         

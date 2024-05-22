@@ -176,11 +176,6 @@ end
 
 % EEG = eeg_checkset(EEG); % no need to check to reduce processing time
 
-% For using pop_resample function: trials number is updated to be 1
-if EEG.trials == 0
-    EEG.trials = 1;
-end
-
 % When loading eego lab data collected on the old asalab caps with
 % adapters, we need to call this function to make channel orders
 % consistent.
