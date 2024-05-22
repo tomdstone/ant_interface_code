@@ -146,7 +146,7 @@ end
 
 %% Fill in the channel location info from template
 % this is not the digitized channel location for each individual, just the
-% channel coordinates of the cap templates
+% channel coordinates from montage templates
 
 % Load an appropriate montage template
 switch montage 
