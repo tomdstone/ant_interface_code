@@ -140,7 +140,7 @@ for i = 1:length(sample_point)-1
     if i == 1 % we only need to check the first segment to raise the error
         [pxx,f] = pwelch(EEG.data(1,:),[],[],[],EEG.srate);
         % if filtering was applied, the high frequency content will be less
-        % than -100dB! This gives us the sign that post-hoc montage and
+        % than -100dB! This likely implies that post-hoc montage and
         % filtering was applied when exporting the raw data from eego
         % software into .cnt and .evt files. Please re-export!
         pxx_db_high = pow2db(pxx(f>=(EEG.srate/2 * 0.8))); % check in the 400-500Hz range if srate is 1000Hz
