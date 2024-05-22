@@ -62,7 +62,7 @@ if verbose
 end
 
 %% Change EEG data from single to double
-if todouble
+if todouble && ~isa(EEG.data, 'double')
     EEG.data = double(EEG.data);
 end
 
