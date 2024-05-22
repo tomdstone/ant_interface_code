@@ -232,7 +232,7 @@ end
 % Clear EEG_store to free up memory
 clearvars EEG_store
 
-%% Set Correct Montage
+%% Set Montage
 % This function does two things:
 %   - adds an empty reference channel back
 %   - fills in the channel location info from a template
