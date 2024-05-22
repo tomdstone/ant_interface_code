@@ -176,18 +176,6 @@ end
 
 % EEG = eeg_checkset(EEG); % no need to check to reduce processing time
 
-% When loading eego lab data collected on the old asalab caps with
-% adapters, we need to call this function to make channel orders
-% consistent.
-
-% Update 10/03/2019: when using the new ANT Duke Waveguard Caps with Z3
-% reference, we need a different set of tranformation of data, as we now
-% have an extra dropdown eye-electrode. We use this same function to
-% configure EEG struct to the correct channel order and give back the
-% reference channel as a zero-line recording channel. 
-
-EEG = ANT_interface_eego2asa(EEG, 'new-Z3');
-
 % By default, we output EEG.data in double precision. If converting to
 % single is needed to save memory space, it should be done elsewhere. Such
 % as in pop_saveset().

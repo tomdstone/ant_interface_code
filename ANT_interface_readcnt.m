@@ -232,6 +232,19 @@ end
 % Clear EEG_store to free up memory
 clearvars EEG_store
 
+%% Re-order channels based on specific montages of EEG caps
+% When loading eego lab data collected on the old asalab caps with
+% adapters, we need to call this function to make channel orders
+% consistent.
+
+% Update 10/03/2019: when using the new ANT Duke Waveguard Caps with Z3
+% reference, we need a different set of tranformation of data, as we now
+% have an extra dropdown eye-electrode. We use this same function to
+% configure EEG struct to the correct channel order and give back the
+% reference channel as a zero-line recording channel.
+
+EEG = ANT_interface_eego2asa(EEG, 'new-Z3');
+
 %% Load Duke template channel location
 % this is not the digitized channel location for each individual, just the
 % channel coordinates of the Duke Waveguard template
