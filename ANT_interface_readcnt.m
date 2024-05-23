@@ -67,7 +67,7 @@ catch
     % Add path to EEGLAB
     addpath(fullfile(temp{1}, 'eeglab14_1_2b'))
     
-    % Add path to EEGLAB firflit plugin for pop_resample()
+    % Add path to EEGLAB firfilt plugin for pop_resample()
     addpath(fullfile(temp{1}, 'eeglab14_1_2b/plugins/firfilt1.6.2'))
 end
 
