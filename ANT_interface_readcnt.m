@@ -7,7 +7,7 @@ function [ EEG ] = ANT_interface_readcnt(filename, filepath, dsrate, verbose)
 % (if the recording was broken into multiple segments) with the same naming
 % before the file extension.
 %
-% Last edit: Alex He 05/05/2024
+% Last edit: Alex He 05/22/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Inputs:
 %           - filename:     file name of the .cnt file, the .evt and .seg
