@@ -34,8 +34,8 @@ function [ EEG ] = ANT_interface_setmontage(EEG, montage)
 %                           .chanlocs field.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-% Make sure the correct number of chanlocs is loaded
-assert(EEG.nbchan == length(EEG.chanlocs), 'Number of channels mismatches loaded chanlocs.')
+% Make sure the correct number of channels is read from the .cnt file
+assert(EEG.nbchan == length(EEG.chanlocs), 'Inconsistent number of channels read from .cnt file.')
 
 if nargin < 2
     montage = 'auto';
