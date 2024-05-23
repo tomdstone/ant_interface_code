@@ -205,15 +205,13 @@ end
 
 %% Cascade downsampled data
 if verbose
+    disp(' ')
     if dsrate(1)
-        disp(' ')
         disp('Concatenating downsampled data...')
-        disp(' ')
     else
-        disp(' ')
         disp('Concatenating data in original sampling rate...')
-        disp(' ')
     end
+    disp(' ')
 end
 
 if verbose; tic; end
