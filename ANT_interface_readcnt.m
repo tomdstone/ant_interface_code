@@ -29,7 +29,7 @@
 %
 % Output:
 %           - EEG:          an EEGLAB structure containing all information
-%                           of the recording in .cnt file.
+%                           of the recording in the .cnt file.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % set default values of flag arguments
 if nargin < 3
@@ -40,17 +40,15 @@ elseif nargin < 4
 end
 
 %% Addpath to required toolbox folders
-% Note: this section expects these two folders to exist in the same
+% Note: this section expects the EEGLAB folders to exist in the same
 % directory as the ANT_interface_readcnt.m function. If not, you would have
-% to manually addpath to the folder containing these two toolbox folders,
-% or you can modify the directories to be full paths to your desired
-% locations.
-
-% Let's first attempt to use the butter function SleepEEG_addpath(). You
-% should be able to call it if you are using ANT_interface_readcnt() from
-% any of the SleepEEG_ functions.
+% to manually addpath to the folder containing these toolbox folders, or
+% you can modify the directories to point to your desired locations.
 
 try
+    % Let's first attempt to use the butter function SleepEEG_addpath(). You
+    % should be able to call it if you are using ANT_interface_readcnt() from
+    % any of the SleepEEG_ functions.
     SleepEEG_addpath(matlabroot);
 catch
     % if using SleepEEG_addpath() fails, we will assume the current directory
