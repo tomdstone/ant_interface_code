@@ -147,4 +147,4 @@ channelneighbors(128, [4,17,102,127]) = 1;
 % Check for symmetric matrix 
 assert(issymmetric(channelneighbors), 'Neighbor matrix is not symmetric! Please check!')
 
-save('duke_128_channelneighbors', 'channelneighbors')
+save('duke_128_channelneighbors.mat', 'channelneighbors')
