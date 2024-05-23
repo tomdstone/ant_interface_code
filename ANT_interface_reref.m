@@ -1,10 +1,10 @@
-function [ EEG, data ] = ANT_interface_reref(data, ref_method, G, EOGnum, EEG, verbose)
+function [ EEG, data ] = ANT_interface_reref(data, ref_method, G, EEG, verbose)
 %
 % ANT INTERFACE CODES - REREF
 %
 % % - function to re-reference EEG recording.
 %            - AR (common average)
-%            - Z3 (recording reference at Z3 no.85)
+%            - Z3 (recording reference at Z3)
 %            - [CH] (arbitrary channel number as reference)
 %            - left mastoid
 %            - linked mastoid
@@ -13,7 +13,7 @@ function [ EEG, data ] = ANT_interface_reref(data, ref_method, G, EOGnum, EEG, v
 %            - contral mastoid
 %            - LP (Laplacian reference based on duke layout)
 %
-% Last edit: Alex He 02/09/2020
+% Last edit: Alex He 05/22/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Inputs:
 %           - data:         a double matrix containing recording data.
@@ -29,10 +29,6 @@ function [ EEG, data ] = ANT_interface_reref(data, ref_method, G, EOGnum, EEG, v
 %                           provided, the lead field matrix from example
 %                           data will be used for REST referencing.
 %                           default: []
-%
-%           - EOGnum:       channel number of the EOG to exclude from
-%                           referencing.
-%                           default: 129
 %
 %           - EEG:          data structure containing the EEG data and
 %                           reference scheme specification.
@@ -50,15 +46,11 @@ function [ EEG, data ] = ANT_interface_reref(data, ref_method, G, EOGnum, EEG, v
 if nargin < 2 % for simple use on raw data provided as first input
     ref_method = 'AR';
     G = [];
-    EOGnum = 129;
     EEG = struct; EEG.refscheme = 'NaN';
     verbose = true;
 else
     if ~exist('G', 'var')
         G = [];
-    end
-    if ~exist('EOGnum', 'var')
-        EOGnum = 129;
     end
     if ~exist('EEG', 'var')
         EEG = struct; EEG.refscheme = 'NaN';
@@ -69,19 +61,45 @@ else
 end
 if isempty(data)
     justEEG = true;
+else
+    justEEG = false;
 end
 
 %% Load the reference matrix
-load('duke_128_refmatrix.mat')
+load('duke_128_refmatrix.mat', 'ref_matrix')
 
 %% set up data for re-referencing if not provided as first input
 if isempty(data)
-    channelindex = 1:size(EEG.data,1);
-    channelindex(EOGnum) = [];
-    data = EEG.data(channelindex,:);
+    % the referencing matrices in duke_128_refmatrix.mat assume a
+    % particular ordering of channels. Let's pull the data into the
+    % expected ordering.
+    
+    assert(isfield(EEG, 'chanlocs'), 'Cannot proceed with referencing as EEG is missing chanlocs.')
+    
+    load('ANT_montage_templates.mat', 'chanlocs_dukeZ3')
+    template_labels = {chanlocs_dukeZ3.labels};
+    
+    % drop the EOG channel
+    template_labels = template_labels(1:128);
+    
+    % build the channel indices
+    channelindex = nan(size(template_labels));
+    labels = {EEG.chanlocs.labels};
+    
+    for ii = 1:length(channelindex)
+        idx = find(cellfun(@(x) strcmp(x, template_labels{ii}), labels));
+        if ~isempty(idx)
+            channelindex(ii) = idx;
+        end
+    end
+    
+    assert(~any(isnan(channelindex)), 'Some channels required for referencing cannot be found.')
+    
+    % Pull the data into the expected ordering of the referencing matrices
+    data = EEG.data(channelindex, :);
 end
 
-%%
+%% Referencing
 if isa(ref_method, 'double')
     assert(length(ref_method) == 1, 'More than one channel provided for unipolar re-referencing.')
     
@@ -180,8 +198,7 @@ else
     end
 end
 
-%% update the EEG structure with re-referenced data 
-
+%% update the EEG structure with re-referenced data
 if justEEG
     EEG.data(channelindex,:) = data;
 elseif size(EEG.data, 1) == size(data, 1)
