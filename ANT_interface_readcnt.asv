@@ -77,7 +77,7 @@ eeglab nogui; close;
 %% Construct data filename
 datafn = fullfile(filepath, filename);
 
-%% Report EEG record length
+%% Report EEG record Length
 if verbose
     disp(' ')
     if dsrate(1)
@@ -105,7 +105,7 @@ if verbose
     disp(' ')
 end
 
-%% Load data in pieces
+%% Load Data In Pieces
 % construct 30-min segment sample points for looping
 sample_point = 0:cnt_info.sample_rate*60*30:cnt_info.sample_count;
 sample_point = [sample_point cnt_info.sample_count]; % add in the last sample point
@@ -203,7 +203,7 @@ if verbose
     toc
 end
 
-%% Cascade downsampled data
+%% Cascade Downsampled Data
 if verbose
     if dsrate(1)
         disp(' ')
@@ -235,7 +235,7 @@ end
 % Clear EEG_store to free up memory
 clearvars EEG_store
 
-%% Set montage
+%% Set Montage
 % This function does two things:
 %   - adds an empty reference channel back
 %   - fills in the channel location info from a template
