@@ -1,4 +1,4 @@
-function [ EEG ] = ANT_interface_readcnt(filename, filepath, dsrate, verbose)
+ function [ EEG ] = ANT_interface_readcnt(filename, filepath, dsrate, verbose)
 %
 % ANT INTERFACE CODES - READCNT
 %
@@ -66,6 +66,9 @@ catch
     
     % Add path to EEGLAB
     addpath(fullfile(temp{1}, 'eeglab14_1_2b'))
+    
+    % Add path to EEGLAB firflit plugin for pop_resample()
+    addpath(fullfile(temp{1}, 'eeglab14_1_2b/plugins/firfilt1.6.2'))
 end
 
 %% Start EEGLab
