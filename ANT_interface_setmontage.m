@@ -36,6 +36,7 @@ function [ EEG ] = ANT_interface_setmontage(EEG, montage)
 
 % Make sure the correct number of channels is read from the .cnt file
 assert(EEG.nbchan == length(EEG.chanlocs), 'Inconsistent number of channels read from .cnt file.')
+assert(EEG.nbchan == 128, 'Montage setting is only supported for the 128-channel caps for now.')
 
 if nargin < 2
     montage = 'auto';
