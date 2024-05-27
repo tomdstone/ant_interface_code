@@ -1,4 +1,4 @@
-function [ fastscan ] = ANT_MNE_fastscan(pcfn, markfn, fsfn, filepath, criteria, verbose, montage)
+function [ fastscan ] = ANT_MNE_fastscan(pcfn, markfn, fsfn, filepath, montage, criteria, verbose)
 %
 % ANT MNE CODES - FASTSCAN
 %
@@ -11,7 +11,7 @@ function [ fastscan ] = ANT_MNE_fastscan(pcfn, markfn, fsfn, filepath, criteria,
 % - updated to support 64-channel+EOG Waveguard equidistant cap as well as
 % the 129-channel Saline Waveguard Net cap in this function.
 %
-% Last edit: Alex He 05/26/2024
+% Last edit: Alex He 05/27/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Inputs:
 %           - pcfn:         filename of the .mat file exported from
@@ -56,6 +56,10 @@ function [ fastscan ] = ANT_MNE_fastscan(pcfn, markfn, fsfn, filepath, criteria,
 %                           final fastscan structure (name specified by
 %                           fsfn) to be saved to a .mat file.
 %
+%           - montage:      which Waveguard equidistant montage cap was
+%                           used for the Fastscan.
+%                           default: 'dukeZ3'
+%
 %           - criteria:     a 1x2 vector specifying the tolerable ranges of
 %                           angle deviation and distance deviation in
 %                           transforming from FastScan native coordinate
@@ -66,10 +70,6 @@ function [ fastscan ] = ANT_MNE_fastscan(pcfn, markfn, fsfn, filepath, criteria,
 %                           processing subject's electrode location files
 %                           default: true
 %
-%           - montage:      which Waveguard equidistant montage cap was
-%                           used for the Fastscan.
-%                           default: 'dukeZ3'
-%
 % Output:
 %           - fastscan:     a structure containing all information of the
 %                           digitization of electrodes acquired by Polhemus
@@ -79,16 +79,16 @@ function [ fastscan ] = ANT_MNE_fastscan(pcfn, markfn, fsfn, filepath, criteria,
 %                           fastscan.head
 %                               - point cloud of head surface
 %                           fastscan.electrode
-%                               - coordinates of electrodes in native
+%                               - coordinates of electrodes in the native
 %                               FastScan coordinate system
 %                           fastscan.landmark
 %                               - coordinates of right preauricular point,
-%                               nasion, and left preauricular point in
+%                               nasion, and left preauricular point in the
 %                               native FastScan coordinate system
-%                           fastscan.electrode_dukexyz
+%                           fastscan.electrode_waveguard_xyz
 %                               - coordinates of electrodes in the new
 %                               Waveguard configuration coordinate system
-%                           fastscan.landmark_dukexyz
+%                           fastscan.landmark_waveguard_xyz
 %                               - coordinates of right preauricular
 %                               point, nasion, and left preauricular point
 %                               in the new Waveguard configuration
@@ -96,46 +96,46 @@ function [ fastscan ] = ANT_MNE_fastscan(pcfn, markfn, fsfn, filepath, criteria,
 %                           fastscan.elc_labels
 %                               - names of the channels in both
 %                               fastscan.electrode and
-%                               fastscan.electrode_dukexyz
+%                               fastscan.electrode_waveguard_xyz
 %                           fastscan.landmark_labels
 %                               - names of the fiducial landmarks in both
 %                               fastscan.landmark and
-%                               fastscan.landmark_dukexyz
-%                           fastscan.chanlocs_fs
+%                               fastscan.landmark_waveguard_xyz
+%                           fastscan.chanlocs_subject
 %                               - a structure containing the electrode
 %                               coordinates in the new Waveguard
-%                               configuration coordinate system and the
-%                               same electrode order as EEG.data to be
-%                               integrated with an EEGLAB structure (EEG)
-%                               for the field chanlocs
-%                           fastscan.chanlocs_duke
+%                               configuration coordinate system for the
+%                               subject. Note that this is not exactly the
+%                               same electrode order as EEG.data because of
+%                               the position of the reference electrode. In
+%                               order to integrate this with an EEGLAB
+%                               structure (EEG) for the field chanlocs,
+%                               re-ordering should be done as in the
+%                               ANT_interface_setmontage() function.
+%                           fastscan.chanlocs_template
 %                               - a structure containing the electrode
 %                               coordinates of the Waveguard template
 %                               contained in the field chanlocs in an
 %                               EEGLAB structure (EEG) obtained from
 %                               calling ANT_interface_readcnt.m function
-%                           fastscan.chanlocs_duke_reord
-%                               - a structure containing the electrode
-%                               coordinates of the Waveguard template
-%                               contained in the field chanlocs in an
-%                               EEGLAB structure (EEG) obtained from
-%                               calling ANT_interface_readcnt.m function,
+%                           fastscan.chanlocs_template_fastscan_order
+%                               - same positions as chanlocs_template, but
 %                               re-ordered to the same ordering as the
 %                               order of electrodes marked in Polhemus
-%                               FastScanII software (the order of
+%                               FastScanII software (i.e., the order of
 %                               fastscan.electrode,
-%                               fastscan.electrode_dukexyz, and
+%                               fastscan.electrode_waveguard_xyz, and
 %                               fastscan.elc_labels)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if nargin < 5
+    montage = 'dukeZ3';
     criteria = [2,0.2];
     verbose = true;
-    montage = 'dukeZ3';
 elseif nargin < 6
+    criteria = [2,0.2];
     verbose = true;
-    montage = 'dukeZ3';
 elseif nargin < 7
-    montage = 'dukeZ3';
+    verbose = true;
 end
 
 angle_tol = criteria(1);
@@ -296,12 +296,12 @@ else
     %     savefig(fullfile(dataDir, subID, 'fastscan', [fileID '_visual_elc.fig']))
     %     close all
     %
-    %% Prepare a montage file for mne.gui.coregistration
+    %% Ridig transformation of Fastscan electrodes into Waveguard coordinates
     
     % Need to convert the XYZ to a new coordinate system with different origin
     % and direction vectors based on the Waveguard template in EEGLAB
     
-    % We define the new Waveguard coordinate system the following way:
+    % We define the new 128-channel Waveguard coordinate system the following way:
     % - We find the centroid on the left side among LD3, LD4, and LC3, call
     % it Lmid; we find the centroid on the right side among RD3, RD4, and RC3
     % call it Rmid. We connect Lmid and Rmid, take the midpoint of this line as
@@ -311,7 +311,7 @@ else
     % and pointing towards the front, such that Z1-Z4 should have positive X
     % values.
     
-    % >> If 64-channel cap is used:
+    % If the equidistant 64-channel cap is used:
     % - We find the centroid on the left side among 2LC, 3LC, and 3LB, call
     % it Lmid; we find the centroid on the right side among 2RC, 3RC, and 3RB
     % call it Rmid. We connect Lmid and Rmid, take the midpoint of this line as
@@ -328,18 +328,19 @@ else
     load(fullfile(ANTinterface_path, 'ANT_montage_templates.mat')) %#ok<LOAD>
     switch montage
         case {'dukeZ3'}
-            chanlocs = chanlocs_dukeZ3;
+            chanlocs_template = chanlocs_dukeZ3;
         case {'netZ7'}
-            chanlocs = chanlocs_netZ7;
+            chanlocs_template = chanlocs_netZ7;
         case {'duke0Z'}
-            chanlocs = chanlocs_duke0Z;
+            chanlocs_template = chanlocs_duke0Z;
     end
     
-    waveguard = zeros(length(chanlocs), 3);
-    for i = 1:length(chanlocs)
-        waveguard(i,1) = chanlocs(i).X;
-        waveguard(i,2) = chanlocs(i).Y;
-        waveguard(i,3) = chanlocs(i).Z;
+    % Copy over the XYZ coordinates from the template into a matrix
+    waveguard = zeros(length(chanlocs_template), 3);
+    for ii = 1:length(chanlocs_template)
+        waveguard(ii,1) = chanlocs_template(ii).X;
+        waveguard(ii,2) = chanlocs_template(ii).Y;
+        waveguard(ii,3) = chanlocs_template(ii).Z;
     end
     
     % Let's first visualize the involved electrodes in the Waveguard template. We
@@ -364,7 +365,13 @@ else
                 pcshow(waveguard(40,:), 'b', 'MarkerSize', 2000); % RC3
                 pcshow(waveguard(86,:), 'b', 'MarkerSize', 2000); % Z5
             case {'netZ7'}
-                error('netZ7 Fastscan not implemented after this point!')
+                pcshow(waveguard(87,:), 'b', 'MarkerSize', 2000); % LD3
+                pcshow(waveguard(88,:), 'b', 'MarkerSize', 2000); % LD4
+                pcshow(waveguard(80,:), 'b', 'MarkerSize', 2000); % LC3
+                pcshow(waveguard(119,:), 'b', 'MarkerSize', 2000); % RD3
+                pcshow(waveguard(120,:), 'b', 'MarkerSize', 2000); % RD4
+                pcshow(waveguard(112,:), 'b', 'MarkerSize', 2000); % RC3
+                pcshow(waveguard(35,:), 'b', 'MarkerSize', 2000); % Z5
             case {'duke0Z'}
                 pcshow(waveguard(25,:), 'b', 'MarkerSize', 2000); % 2LC
                 pcshow(waveguard(29,:), 'b', 'MarkerSize', 2000); % 3LC
@@ -384,7 +391,7 @@ else
         title('Waveguard Template', 'FontSize', 16)
         set(gca, 'Color', 'w')
         
-        % Let's visualize these key electrodes in the FASTSCAN digitalization
+        % Let's visualize these key electrodes in the FASTSCAN digitization
         subplot(1,2,2)
         pcshow(oldxyz, 'k', 'MarkerSize', 2000);
         xlabel('X'); ylabel('Y'), zlabel('Z')
@@ -400,7 +407,13 @@ else
                 pcshow(oldxyz(15,:), 'b', 'MarkerSize', 2000); % RC3
                 pcshow(oldxyz(62,:), 'c', 'MarkerSize', 2000); % Z5
             case {'netZ7'}
-                
+                pcshow(oldxyz(120,:), 'b', 'MarkerSize', 2000); % LD3
+                pcshow(oldxyz(121,:), 'b', 'MarkerSize', 2000); % LD4
+                pcshow(oldxyz(113,:), 'b', 'MarkerSize', 2000); % LC3
+                pcshow(oldxyz(8,:), 'b', 'MarkerSize', 2000); % RD3
+                pcshow(oldxyz(9,:), 'b', 'MarkerSize', 2000); % RD4
+                pcshow(oldxyz(15,:), 'b', 'MarkerSize', 2000); % RC3
+                pcshow(oldxyz(63,:), 'c', 'MarkerSize', 2000); % Z5
             case {'duke0Z'}
                 pcshow(oldxyz(57,:), 'b', 'MarkerSize', 2000); % 2LC
                 pcshow(oldxyz(58,:), 'b', 'MarkerSize', 2000); % 3LC
@@ -421,6 +434,7 @@ else
         set(gca, 'Color', 'w')
     end
     
+    % Find the bilateral midpoints
     switch montage
         case {'dukeZ3'}
             % Define centroids of LD3, LD4, LC3, and RD3, RD4, RC3
@@ -431,7 +445,13 @@ else
                 mean([oldxyz(8,2), oldxyz(9,2), oldxyz(15,2)]),...
                 mean([oldxyz(8,3), oldxyz(9,3), oldxyz(15,3)])];
         case {'netZ7'}
-            
+            % Define centroids of LD3, LD4, LC3, and RD3, RD4, RC3
+            Lmid = [mean([oldxyz(120,1), oldxyz(121,1), oldxyz(113,1)]),...
+                mean([oldxyz(120,2), oldxyz(121,2), oldxyz(113,2)]),...
+                mean([oldxyz(120,3), oldxyz(121,3), oldxyz(113,3)])];
+            Rmid = [mean([oldxyz(8,1), oldxyz(9,1), oldxyz(15,1)]),...
+                mean([oldxyz(8,2), oldxyz(9,2), oldxyz(15,2)]),...
+                mean([oldxyz(8,3), oldxyz(9,3), oldxyz(15,3)])];
         case {'duke0Z'}
             % Define centroids of 2LC, 3LC, 3LB, and 2RC, 3RC, 3RB
             Lmid = [mean([oldxyz(57,1), oldxyz(58,1), oldxyz(53,1)]),...
@@ -450,7 +470,7 @@ else
         case {'dukeZ3'}
             vertex = oldxyz(62, :);
         case {'netZ7'}
-            
+            vertex = oldxyz(63, :);
         case {'duke0Z'}
             % Use the mid point between 3Z and 4Z as vertex
             vertex = [mean([oldxyz(31,1), oldxyz(32,1)]),...
@@ -493,7 +513,7 @@ else
     newxyz = (oldxyz-neworigin) * [newuniX', newuniY', newuniZ'];
     
     % transform the landmarks as well
-    newlandmark = (fastscan.landmark-neworigin) * [newuniX', newuniY', newuniZ'] ;
+    newlandmark = (fastscan.landmark-neworigin) * [newuniX', newuniY', newuniZ'];
     
     % Visualize the electrode locations in the new Waveguard coordinate system
     if verbose
@@ -514,7 +534,13 @@ else
                 pcshow(oldxyz(15,:), 'b', 'MarkerSize', 2000); % RC3
                 pcshow(oldxyz(62,:), 'c', 'MarkerSize', 2000); % Z5
             case {'netZ7'}
-                
+                pcshow(oldxyz(120,:), 'b', 'MarkerSize', 2000); % LD3
+                pcshow(oldxyz(121,:), 'b', 'MarkerSize', 2000); % LD4
+                pcshow(oldxyz(113,:), 'b', 'MarkerSize', 2000); % LC3
+                pcshow(oldxyz(8,:), 'b', 'MarkerSize', 2000); % RD3
+                pcshow(oldxyz(9,:), 'b', 'MarkerSize', 2000); % RD4
+                pcshow(oldxyz(15,:), 'b', 'MarkerSize', 2000); % RC3
+                pcshow(oldxyz(63,:), 'c', 'MarkerSize', 2000); % Z5
             case {'duke0Z'}
                 pcshow(oldxyz(57,:), 'b', 'MarkerSize', 2000); % 2LC
                 pcshow(oldxyz(58,:), 'b', 'MarkerSize', 2000); % 3LC
@@ -549,7 +575,13 @@ else
                 pcshow(newxyz(15,:), 'b', 'MarkerSize', 2000); % RC3
                 pcshow(newxyz(62,:), 'c', 'MarkerSize', 2000); % Z5
             case {'netZ7'}
-                
+                pcshow(newxyz(120,:), 'b', 'MarkerSize', 2000); % LD3
+                pcshow(newxyz(121,:), 'b', 'MarkerSize', 2000); % LD4
+                pcshow(newxyz(113,:), 'b', 'MarkerSize', 2000); % LC3
+                pcshow(newxyz(8,:), 'b', 'MarkerSize', 2000); % RD3
+                pcshow(newxyz(9,:), 'b', 'MarkerSize', 2000); % RD4
+                pcshow(newxyz(15,:), 'b', 'MarkerSize', 2000); % RC3
+                pcshow(newxyz(63,:), 'c', 'MarkerSize', 2000); % Z5
             case {'duke0Z'}
                 pcshow(newxyz(57,:), 'b', 'MarkerSize', 2000); % 2LC
                 pcshow(newxyz(58,:), 'b', 'MarkerSize', 2000); % 3LC
@@ -613,51 +645,54 @@ else
         close all
     end
     
-    %% Create a chanlocs structure for the subject << STOPPED HERE!
+    %% Create a chanlocs structure for the subject
     % loads in the labels of fastscan electrodes done by manual labelling
-    % of the RAs
-    load(fullfile(ANTinterface_path, 'duke_129_template.mat'), 'fs_label_order')
-    for i = 1:length(fs_label_order)
-        fs_label_order(i).X = newxyz(i,1);
-        fs_label_order(i).Y = newxyz(i,2);
-        fs_label_order(i).Z = newxyz(i,3);
+    switch montage
+        case {'dukeZ3'}
+            chanlocs_template_fastscan_order = chanlocs_dukeZ3_fastscan_order;
+        case {'netZ7'}
+            chanlocs_template_fastscan_order = chanlocs_netZ7_fastscan_order;
+        case {'duke0Z'}
+            chanlocs_template_fastscan_order = chanlocs_duke0Z_fastscan_order;
+    end
+    chanlocs_subject_fastscan_order = chanlocs_template_fastscan_order;
+    template_labels = {chanlocs_template.labels};
+    for ii = 1:length(chanlocs_subject_fastscan_order)
+        chanlocs_subject_fastscan_order(ii).X = newxyz(ii,1);
+        chanlocs_subject_fastscan_order(ii).Y = newxyz(ii,2);
+        chanlocs_subject_fastscan_order(ii).Z = newxyz(ii,3);
+        chanlocs_subject_fastscan_order(ii).template_idx = find(cellfun(@(x) strcmp(x, chanlocs_subject_fastscan_order(ii).labels), template_labels));
     end
     
     % Convert to EEGLAB 2D polar coordinates for topoplot
-    fschanlocs = convertlocs(fs_label_order, 'cart2all');
+    chanlocs_subject_fastscan_order = convertlocs(chanlocs_subject_fastscan_order, 'cart2all');
     
-    % Load reordered Waveguard template chanlocs such that it has the same order
-    % as the desired FastScan labeling of electrodes (as in fs_template)
-    load(fullfile(ANTinterface_path, 'duke_129_template.mat'), 'chanlocs_reord')
-    
-    % Make EEGLAB 2D topoplots of the electrode locations in the FastScan
-    % order for
+    % Make EEGLAB 2D topoplots of the electrodes in the FastScan order for:
     % 1) Waveguard template electrodes
     % 2) Digitization that was acquired for each subject
-    % We want to manually compare the numbers are approximately identify at
-    % different electrode positions to make sure no labeling error was made
-    % when using stylus pen to mark the electrode positions in FastScanII
-    % software
+    % We want to manually compare the numbers are approximatelythe same at
+    % all electrode positions to make sure no labeling error was made when
+    % marking electrode positions with stylus pen in FastScanII software.
     
     figure;
     set(gcf, 'Position', [200 200 1600 800])
     
     % Waveguard template
     subplot(1,2,1)
-    topoplot([],chanlocs_reord,'style','both','electrodes','ptsnumbers','emarker', {'.', 'k', 15, 1});
+    topoplot([],chanlocs_template_fastscan_order,'style','both','electrodes','ptsnumbers','emarker', {'.', 'k', 15, 1});
     L = findobj(gcf, 'type', 'Text');
-    for ind = 1:length(chanlocs_reord)
-        set(L(length(chanlocs_reord)+1-ind), 'FontSize', 14)
+    for ind = 1:length(chanlocs_template_fastscan_order)
+        set(L(length(chanlocs_template_fastscan_order)+1-ind), 'FontSize', 14)
     end
     title([fileID ' Template Positions'], 'FontSize', 30, 'Interpreter', 'none')
     
     % FastScan Digitization
     subplot(1,2,2)
-    topoplot([],fschanlocs,'style','both','electrodes','ptsnumbers','emarker', {'.', 'k', 15, 1});
+    topoplot([],chanlocs_subject_fastscan_order,'style','both','electrodes','ptsnumbers','emarker', {'.', 'k', 15, 1});
     L = findobj(gcf, 'type', 'Text');
-    for ind = 1:length(fschanlocs)
-        set(L(length(fschanlocs)+1-ind), 'FontSize', 14)
-        set(L(length(fschanlocs)+1-ind), 'Color', [0,0,1])
+    for ind = 1:length(chanlocs_subject_fastscan_order)
+        set(L(length(chanlocs_subject_fastscan_order)+1-ind), 'FontSize', 14)
+        set(L(length(chanlocs_subject_fastscan_order)+1-ind), 'Color', [0,0,1])
     end
     title([fileID ' Digitization Positions'], 'FontSize', 30, 'Color', [0,0,1], 'Interpreter', 'none')
     
@@ -676,28 +711,24 @@ else
     
     %% Now that both landmark orders and electrode orders are vetted, store them
     % Digitization in Waveguard coordinates
-    fastscan.electrode_dukexyz = newxyz;
-    fastscan.landmark_dukexyz = newlandmark;
+    fastscan.electrode_waveguard_xyz = newxyz;
+    fastscan.landmark_waveguard_xyz = newlandmark;
     
     % Digitization labels
-    elclabels = cell(length(fschanlocs), 1);
-    for i = 1:length(fschanlocs)
-        elclabels{i} = fschanlocs(i).labels;
-    end
-    fastscan.elc_labels = elclabels;
+    fastscan.elc_labels = {chanlocs_subject_fastscan_order.labels};
     fastscan.landmark_labels = {'rpa'; 'nasion'; 'lpa'}; % Right Preauricular Point, Nasion, Left Preauricular Point
     
     % Re-order into the Waveguard template electrode order that is almost
-    % the same as the collected EEG.data (not exactly the same!)
-    chanlocs_fs = fschanlocs;
-    for i = 1:length(fschanlocs)
-        chanlocs_fs(fschanlocs(i).ognum) = fschanlocs(i);
+    % the same as the collected EEG.data (05/27/2024: not exactly the same!)
+    chanlocs_subject = chanlocs_subject_fastscan_order;
+    for ii = 1:length(chanlocs_subject_fastscan_order)
+        chanlocs_subject(chanlocs_subject_fastscan_order(ii).template_idx) = chanlocs_subject_fastscan_order(ii);
     end
-    fastscan.chanlocs_fs = chanlocs_fs;
+    fastscan.chanlocs_subject = chanlocs_subject;
     
-    % Waveguard template values
-    fastscan.chanlocs_duke = chanlocs;
-    fastscan.chanlocs_duke_reord = chanlocs_reord;
+    % Waveguard template structures
+    fastscan.chanlocs_template = chanlocs_template;
+    fastscan.chanlocs_template_fastscan_order = chanlocs_template_fastscan_order;
     
     % Save the structure so we don't have to do these manual checkings again
     if verbose
@@ -710,7 +741,7 @@ else
     
 end
 
-%% Store in formats readable by Python
+%% Store in a format readable by Python
 % We have confirmed the correctness of electrode labelling by
 % transforming the digitization locations into EEGLAB 2D topoplot of
 % the Waveguard coordinate system of the template. We are confident in the
@@ -737,7 +768,6 @@ fs_dig.Y = [fastscan.landmark(:,2); fastscan.electrode(:,2)];
 fs_dig.Z = [fastscan.landmark(:,3); fastscan.electrode(:,3)];
 
 % Write to .csv file
-
 csvfn = fullfile(filepath, [fileID '.csv']);
 writetable(fs_dig, csvfn, 'Delimiter', ',')
 
