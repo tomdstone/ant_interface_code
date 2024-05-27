@@ -7,7 +7,7 @@
 % (if the recording was broken into multiple segments) with the same naming
 % before the file extension.
 %
-% Last edit: Alex He 05/22/2024
+% Last edit: Alex He 05/27/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Inputs:
 %           - filename:     file name of the .cnt file, the .evt and .seg
@@ -218,7 +218,22 @@ EEG = EEG_store{1};
 if verbose; disp('Concatenating the 1st segment...'); end
 % Loop through the rest EEG structures
 for i = 2:length(EEG_store) % starts from 2nd index
-    EEG = ANT_interface_catEEG(EEG, EEG_store{i});
+    % Confirm that the sampling rates are identical and they are from the same original file
+    assert(EEG.srate == EEG_store{i}.srate, 'Different sampling rate, please check!')
+    assert(strcmp(EEG.comments, EEG_store{i}.comments), 'Different original file!')
+    assert(size(EEG.data, 1) == size(EEG_store{i}.data, 1), 'Different numbers of channels!')
+    
+    % Use EEGLAB function pop_mergeset() to merge the two structures
+    EEG = pop_mergeset(EEG, EEG_store{i});
+
+    % Check if impedance measures should be incorporated
+    if ~isempty(EEG_store{i}.endimp)
+        EEG.endimp = EEG_store{i}.endimp;
+    end
+    if ~isempty(EEG_store{i}.initimp)
+        EEG.initimp = EEG_store.initimp;
+    end
+    
     if verbose; disp(['Concatenating the ' num2str(i) 'th segment...']); end
 end
 if verbose
