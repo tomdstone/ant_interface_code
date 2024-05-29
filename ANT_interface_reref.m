@@ -66,11 +66,14 @@ else
 end
 
 %% Load the reference matrix
-load('duke_128_refmatrix.mat', 'ref_matrix')
+ANTinterface_path = which('ANT_interface_reref');
+temp = strsplit(ANTinterface_path, 'ANT_interface_reref.m');
+ANTinterface_path = temp{1};
+load(fullfile(ANTinterface_path, 'gelDuke-128_noEOG_refmatrix.mat'), 'ref_matrix')
 
 %% set up data for re-referencing if not provided as first input
 if isempty(data)
-    % the referencing matrices in duke_128_refmatrix.mat assume a
+    % the referencing matrices in gelDuke-128_noEOG_refmatrix.mat assume a
     % particular ordering of channels. Let's pull the data into the
     % expected ordering.
     

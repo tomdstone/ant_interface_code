@@ -1,4 +1,4 @@
-function [ EEG ] = ANT_interface_saveset(EEG_to_save, savefn, filepath, verbose)
+ function [ EEG ] = ANT_interface_saveset(EEG_to_save, savefn, filepath, verbose)
 %
 % ANT INTERFACE CODES - SAVESET
 %

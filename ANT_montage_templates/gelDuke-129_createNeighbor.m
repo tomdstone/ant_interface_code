@@ -1,5 +1,4 @@
-%%
-% ANT INTERFACE SCRIPT - CREATENEIGHBOR
+%% Specify neighbors for the gelDuke-129 (dukeZ3) montage
 %
 % - creates a channelneighbors matrix specifying the neighbors of each
 % electrode according to manual labelling of the hexagonal layout.
