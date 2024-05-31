@@ -2,7 +2,7 @@ function [ EEG, data ] = ANT_interface_reref(data, ref_method, G, EEG, verbose)
 %
 % ANT INTERFACE CODES - REREF
 %
-% % - function to re-reference EEG recording.
+% - function to re-reference EEG recording.
 %            - AR (common average)
 %            - Z3 (recording reference at Z3)
 %            - [CH] (arbitrary channel number as reference)

@@ -1,9 +1,8 @@
- function [ EEG ] = ANT_interface_saveset(EEG_to_save, savefn, filepath, verbose)
+function [ EEG ] = ANT_interface_saveset(EEG_to_save, savefn, filepath, verbose)
 %
 % ANT INTERFACE CODES - SAVESET
 %
-% - saves the EEG structure as an EEGLAB .set format file for future
-% loading.
+% - saves the EEG structure as an EEGLAB .set format file for future use.
 %
 % Last edit: Alex He 05/05/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
