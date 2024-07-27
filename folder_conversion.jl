@@ -1,6 +1,9 @@
 using ArgParse
 
-s = ArgParseSettings()
+s = ArgParseSettings(
+    description = "This program processes all `.cnt` files in a folder structure, converting them to `.set`"
+    , version = "1.1"
+)
 
 @add_arg_table! s begin
     "dir"
@@ -8,7 +11,7 @@ s = ArgParseSettings()
         help = "Root directory to process all folders in"
 end
 
-dir = abspath(parse_args(s)["dir"])
+dir = abspath(something(parse_args(s)["dir"], "."))
 
 for (r, dirs, files) in walkdir(dir)
     for file in files
