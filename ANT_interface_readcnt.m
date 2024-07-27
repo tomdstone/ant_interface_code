@@ -250,7 +250,7 @@ clearvars EEG_store
 % This function does two things:
 %   - adds an empty reference channel back
 %   - fills in the channel location info from a template
-EEG = ANT_interface_setmontage(EEG, 'auto');
+% EEG = ANT_interface_setmontage(EEG, 'auto');
 
 end
 
@@ -306,7 +306,7 @@ if strcmp(montage, 'auto')
     
     % Auto-detect among waveguard montages
     if strcmp(labels{1}, 'Lm') && ...
-            strcmp(labels{85}, 'VEOGL') && ...
+            strcmp(labels{85}, 'EOG') && ...
             ~any(cellfun(@(x) strcmp(x, 'Z3'), labels)) && ...
             ~any(cellfun(@(x) strcmp(x, 'LL14'), labels))
         montage = 'gelDuke-Z3';
