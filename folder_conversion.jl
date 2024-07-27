@@ -9,9 +9,13 @@ s = ArgParseSettings(
     "dir"
         arg_type = String
         help = "Root directory to process all folders in"
+        default = "."
+    "-v", "--version"
+        action = :show_version
+        help = "show version information and exit"
 end
 
-dir = abspath(something(parse_args(s)["dir"], "."))
+dir = abspath(parse_args(s)["dir"])
 
 for (r, dirs, files) in walkdir(dir)
     for file in files
