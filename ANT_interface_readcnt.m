@@ -274,7 +274,7 @@ function [ EEG ] = ANT_interface_setmontage(EEG, montage)
 % and read with ANT_interface_readcnt(), or as BrainVision files and read
 % directly into MNE-Python.
 %
-% Last edit: Alex He 05/30/2024
+% Last edit: Alex He 07/29/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Inputs:
 %           - EEG:          an EEG structure with EEG.data in the order of
@@ -293,7 +293,7 @@ function [ EEG ] = ANT_interface_setmontage(EEG, montage)
 
 % Make sure the correct number of channels is read from the .cnt file
 assert(EEG.nbchan == length(EEG.chanlocs), 'Inconsistent number of channels read from .cnt file.')
-assert(EEG.nbchan == 128, 'Montage setting is only supported for the 128-channel caps for now.')
+assert(EEG.nbchan >= 128, 'Montage setting is only supported for the 128-channel caps for now.')
 
 if nargin < 2
     montage = 'auto';
