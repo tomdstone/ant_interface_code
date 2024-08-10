@@ -117,6 +117,11 @@ EEG.xmin            = r.v4_data.start_in_seconds;
 EEG.srate           = r.v4_info.sample_rate;
 EEG.pnts            = 1 + r.sample2 - r.sample1;
 
+% Raise warning if srate is lower than 2kHz due to aliased line noise
+if EEG.srate < 2000
+    warning('.cnt file loaded by pop_loadeep_v4() has sampling frequency lower than 2000Hz: signals recorded by eego amplifiers may have significant aliased line noise!')
+end
+
 % Create struct for holding channel labels
 for i=1:r.v4_info.channel_count
   EEG.chanlocs(i).labels=r.v4_info.channels(i).label;
