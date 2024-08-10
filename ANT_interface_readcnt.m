@@ -378,17 +378,28 @@ switch montage
 end
 labels = {chanlocs.labels};
 
+% Make sure that all channels in the template are contained in the data
+EEG_labels = {EEG.chanlocs.labels};
+for ii = 1:length(labels)
+    assert(any(find(cellfun(@(x) strcmp(x, labels{ii}), EEG_labels))), ...
+        ['Channel "', labels{ii}, '" is not found in the .cnt file but is expected under the "', montage, '" montage.'])
+end
+
 % Create an empty chanlocs using the same fields as the template chanlocs
 fns = fieldnames(chanlocs)';
 fns{2, 1} = {};
 tmp_chanlocs = struct(fns{:});
 
+% Fill in the channel location info from the template
 for ii = 1:EEG.nbchan
-    current_label = EEG.chanlocs(ii).labels;
+    current_label = EEG_labels{ii};
     template_idx = find(cellfun(@(x) strcmp(x, current_label), labels));
-    if isempty(template_idx) % channel label not found in template
+    if isempty(template_idx) 
+        % channel label not found in template, which can happen if there
+        % are additional channels recorded such as bipolar electrodes
         tmp_chanlocs(ii).labels = current_label;
     else
+        % use the location info from the template for the channel
         tmp_chanlocs(ii) = chanlocs(template_idx);
     end
 end
