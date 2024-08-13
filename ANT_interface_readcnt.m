@@ -70,7 +70,7 @@ catch
 end
 
 %% Start EEGLab
-eeglab nogui; close;
+eeglab nogui;
 
 %% Construct data filename
 datafn = fullfile(filepath, filename);

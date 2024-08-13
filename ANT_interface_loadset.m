@@ -49,7 +49,7 @@ end
 
 %% Load data
 % Start EEGLab
-eeglab nogui; close;
+eeglab nogui;
 
 if verbose; tic; end
 % Call pop_loadset.m function from EEGLAB to load .set file
