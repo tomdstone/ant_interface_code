@@ -383,11 +383,11 @@ end
 
 % Update impedance values - all auxiliary channels should also be NaN
 if ~isempty(EEG.initimp)
-    EEG.initimp(n_expected:end) = NaN;
+    EEG.initimp(n_expected:EEG.nbchan+1) = NaN;
 end
 
 if ~isempty(EEG.endimp)
-    EEG.endimp(n_expected:end) = NaN;
+    EEG.endimp(n_expected:EEG.nbchan+1) = NaN;
 end
 
 % Update the number of channels
