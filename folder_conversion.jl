@@ -17,12 +17,11 @@ end
 
 dir = abspath(parse_args(s)["dir"])
 
-for (r, dirs, files) in walkdir(dir)
+for (r, _, files) in walkdir(dir)
     for file in files
         if splitext(file)[2] == ".cnt" && !(splitext(file)[1] * ".set" in files)
-            infile = joinpath(r, file)
+            infile  = joinpath(r, file)
             outfile = joinpath(r, splitext(file)[1]*".set")
-
             command = `matlab -nodisplay -nosplash -nodesktop -r "convert_cli $infile $outfile; exit;"`
 
             run(command)
