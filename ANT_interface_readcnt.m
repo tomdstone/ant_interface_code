@@ -70,7 +70,7 @@ catch
 end
 
 %% Start EEGLab
-eeglab nogui; close;
+eeglab nogui;
 
 %% Construct data filename
 datafn = fullfile(filepath, filename);
@@ -165,7 +165,7 @@ for i = 1:length(sample_point)-1
         %   fc         - anti-aliasing filter cutoff (pi rad / sample)
         %                {default 0.9}
         %   df         - anti-aliasing filter transition band width (pi rad /
-        %                sample) {default 0.2}        
+        %                sample) {default 0.2}
         if verbose; disp(' '); disp('Downsampling...'); end
         EEG = pop_resample(EEG, dsrate(2), 0.9, 0.1);
         
@@ -225,7 +225,7 @@ for i = 2:length(EEG_store) % starts from 2nd index
     
     % Use EEGLAB function pop_mergeset() to merge the two structures
     EEG = pop_mergeset(EEG, EEG_store{i});
-
+    
     % Check if impedance measures should be incorporated
     if ~isempty(EEG_store{i}.endimp)
         EEG.endimp = EEG_store{i}.endimp;
@@ -274,7 +274,7 @@ function [ EEG ] = ANT_interface_setmontage(EEG, montage)
 % and read with ANT_interface_readcnt(), or as BrainVision files and read
 % directly into MNE-Python.
 %
-% Last edit: Alex He 07/29/2024
+% Last edit: Alex He 09/02/2024
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Inputs:
 %           - EEG:          an EEG structure with EEG.data in the order of
@@ -293,7 +293,6 @@ function [ EEG ] = ANT_interface_setmontage(EEG, montage)
 
 % Make sure the correct number of channels is read from the .cnt file
 assert(EEG.nbchan == length(EEG.chanlocs), 'Inconsistent number of channels read from .cnt file.')
-assert(EEG.nbchan >= 128, 'Montage setting is only supported for the 128-channel caps for now.')
 
 if nargin < 2
     montage = 'auto';
@@ -305,6 +304,8 @@ if strcmp(montage, 'auto')
     labels = {EEG.chanlocs.labels};
     
     % Auto-detect among waveguard montages
+    
+    % 128-channel montages
     if strcmp(labels{1}, 'Lm') && ...
             strcmp(labels{85}, 'EOG') && ...
             ~any(cellfun(@(x) strcmp(x, 'Z3'), labels)) && ...
@@ -317,6 +318,19 @@ if strcmp(montage, 'auto')
             ~any(cellfun(@(x) strcmp(x, 'VEOGL'), labels))
         montage = 'salineNet-Z7';
         
+    % 64-channel montages
+    elseif strcmp(labels{1}, 'VEOGL') && ...
+            strcmp(labels{2}, '1Z') && ...
+            ~any(cellfun(@(x) strcmp(x, '0Z'), labels)) && ...
+            ~any(cellfun(@(x) strcmp(x, '11L'), labels))
+        montage = 'gelDuke-0Z';
+        
+    elseif strcmp(labels{1}, '1Z') && ...
+            strcmp(labels{30}, '11R') && ...
+            ~any(cellfun(@(x) strcmp(x, '5Z'), labels)) && ...
+            ~any(cellfun(@(x) strcmp(x, 'VEOGL'), labels))
+        montage = 'salineNet-5Z';
+        
     else
         error('Could not detect a compatible montage. Please manually check!')
         
@@ -324,20 +338,29 @@ if strcmp(montage, 'auto')
 end
 
 %% Add the reference channel back to the data
+% Set the number of expected electrodes based on montage - actualy numbers
+% may exceed this value if additional auxiliary electrodes are used
+switch montage
+    case {'gelDuke-Z3', 'salineNet-Z7'}
+        n_expected = 129;
+    case {'gelDuke-0Z', 'salineNet-5Z'}
+        n_expected = 65;
+end
+
 % Move the extra channels (such as bipolar) if there is any
-if EEG.nbchan >= 129
-    EEG.data(130:EEG.nbchan+1, :) = EEG.data(129:end, :);
-    EEG.chanlocs(130:EEG.nbchan+1) = EEG.chanlocs(129:end);
+if EEG.nbchan >= n_expected
+    EEG.data(n_expected+1:EEG.nbchan+1, :) = EEG.data(n_expected:end, :);
+    EEG.chanlocs(n_expected+1:EEG.nbchan+1) = EEG.chanlocs(n_expected:end);
     if ~isempty(EEG.initimp)
-        EEG.initimp(130:EEG.nbchan+1) = EEG.initimp(129:end);
+        EEG.initimp(n_expected+1:EEG.nbchan+1) = EEG.initimp(n_expected:end);
     end
     if ~isempty(EEG.endimp)
-        EEG.endimp(130:EEG.nbchan+1) = EEG.endimp(129:end);
+        EEG.endimp(n_expected+1:EEG.nbchan+1) = EEG.endimp(n_expected:end);
     end
 end
 
 % Insert a reference channel as zero recording
-EEG.data(129, :) = zeros(1, EEG.pnts);
+EEG.data(n_expected, :) = zeros(1, EEG.pnts);
 
 % Update the reference field
 EEG.ref = 'see refscheme';
@@ -345,25 +368,32 @@ EEG.ref = 'see refscheme';
 % Add the reference channel to chanlocs
 switch montage
     case 'gelDuke-Z3'
-        EEG.chanlocs(129).labels = 'Z3';
+        EEG.chanlocs(n_expected).labels = 'Z3';
         EEG.refscheme = 'Z3';
     case 'salineNet-Z7'
-        EEG.chanlocs(129).labels = 'Z7';
+        EEG.chanlocs(n_expected).labels = 'Z7';
         EEG.refscheme = 'Z7';
+    case 'gelDuke-0Z'
+        EEG.chanlocs(n_expected).labels = '0Z';
+        EEG.refscheme = '0Z';
+    case 'salineNet-5Z'
+        EEG.chanlocs(n_expected).labels = '5Z';
+        EEG.refscheme = '5Z';
 end
 
+% Update impedance values - all auxiliary channels should also be NaN
 if ~isempty(EEG.initimp)
-    EEG.initimp(129) = NaN;
+    EEG.initimp(n_expected:EEG.nbchan+1) = NaN;
 end
 
 if ~isempty(EEG.endimp)
-    EEG.endimp(129) = NaN;
+    EEG.endimp(n_expected:EEG.nbchan+1) = NaN;
 end
 
 % Update the number of channels
 EEG.nbchan = size(EEG.data, 1);
 
-%% Fill in the channel location info from template
+%% Fill in the channel location info from a matching template
 % this is not the digitized channel location for each individual, just the
 % channel coordinates from montage templates
 
@@ -375,25 +405,42 @@ switch montage
     case 'salineNet-Z7'
         chanlocs = load('ANT_montage_templates.mat', 'chanlocs_netZ7');
         chanlocs = chanlocs.chanlocs_netZ7;
+    case 'gelDuke-0Z'
+        chanlocs = load('ANT_montage_templates.mat', 'chanlocs_duke0Z');
+        chanlocs = chanlocs.chanlocs_duke0Z;
+    case 'salineNet-5Z'
+        chanlocs = load('ANT_montage_templates.mat', 'chanlocs_net5Z');
+        chanlocs = chanlocs.chanlocs_net5Z;
 end
 labels = {chanlocs.labels};
+
+% Make sure that all channels in the template are contained in the data
+EEG_labels = {EEG.chanlocs.labels};
+for ii = 1:length(labels)
+    assert(any(find(cellfun(@(x) strcmp(x, labels{ii}), EEG_labels))), ...
+        ['Channel "', labels{ii}, '" is not found in the .cnt file but is expected under the "', montage, '" montage.'])
+end
 
 % Create an empty chanlocs using the same fields as the template chanlocs
 fns = fieldnames(chanlocs)';
 fns{2, 1} = {};
 tmp_chanlocs = struct(fns{:});
 
+% Fill in the channel location info from the template
 for ii = 1:EEG.nbchan
-    current_label = EEG.chanlocs(ii).labels;
+    current_label = EEG_labels{ii};
     template_idx = find(cellfun(@(x) strcmp(x, current_label), labels));
-    if isempty(template_idx) % channel label not found in template
+    if isempty(template_idx)
+        % channel label not found in template, which can happen if there
+        % are additional channels recorded such as bipolar electrodes
         tmp_chanlocs(ii).labels = current_label;
     else
+        % use the location info from the template for the channel
         tmp_chanlocs(ii) = chanlocs(template_idx);
     end
 end
 
-% Update EEG.chanlocs with location info populated from an template
+% Update EEG.chanlocs with location info populated from the template
 EEG.chanlocs = tmp_chanlocs;
 
 end

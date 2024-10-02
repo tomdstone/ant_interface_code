@@ -43,7 +43,7 @@ catch
 end
 
 % Start EEGLab
-eeglab nogui; close;
+eeglab nogui;
 
 %% Saving the EEG structure in the current workspace
 if verbose
